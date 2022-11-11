@@ -1,0 +1,31 @@
+diff --git a/node_modules/react-native-notification-sounds/android/build.gradle b/node_modules/react-native-notification-sounds/android/build.gradle
+index 04bd06c..5b51c22 100644
+--- a/node_modules/react-native-notification-sounds/android/build.gradle
++++ b/node_modules/react-native-notification-sounds/android/build.gradle
+@@ -15,7 +15,7 @@ buildscript {
+ }
+ 
+ apply plugin: 'com.android.library'
+-apply plugin: 'maven'
++apply plugin: 'maven-publish'
+ 
+ // Matches values in recent template from React Native 0.59 / 0.60
+ // https://github.com/facebook/react-native/blob/0.59-stable/template/android/build.gradle#L5-L9
+@@ -118,11 +118,12 @@ afterEvaluate { project ->
+ 
+     task installArchives(type: Upload) {
+         configuration = configurations.archives
+-        repositories.mavenDeployer {
+-            // Deploy to react-native-event-bridge/maven, ready to publish to npm
+-            repository url: "file://${projectDir}/../android/maven"
+-
+-            configureReactNativePom pom
++        publishing {
++         repositories {
++          maven {
++            url = uri("${rootProject.projectDir}/maven-repo")
+         }
+     }
++}
++    }
+ }

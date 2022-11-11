@@ -1,0 +1,105 @@
+{
+  "project_info": {
+    "project_number": "401421104771",
+    "project_id": "dependable-star-358210",
+    "storage_bucket": "dependable-star-358210.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401421104771:android:67b8c16f6ee1aebf35cdb6",
+        "android_client_info": {
+          "package_name": "com.voicecallselfmanged"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "401421104771-haq3gctttsv12d4pi68j5frcce717nvn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAwOQpQA-9ikS_a4GpyhgKJU40hVxGlTE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "401421104771-haq3gctttsv12d4pi68j5frcce717nvn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401421104771:android:65f415a3937488b535cdb6",
+        "android_client_info": {
+          "package_name": "com.chatapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "401421104771-haq3gctttsv12d4pi68j5frcce717nvn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAwOQpQA-9ikS_a4GpyhgKJU40hVxGlTE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "401421104771-haq3gctttsv12d4pi68j5frcce717nvn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401421104771:android:1db16f445c08387135cdb6",
+        "android_client_info": {
+          "package_name": "com.voicecall"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "401421104771-101qf3g6acucga8go21m4lf8sc6560qt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.voicecall",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "401421104771-haq3gctttsv12d4pi68j5frcce717nvn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAwOQpQA-9ikS_a4GpyhgKJU40hVxGlTE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "401421104771-haq3gctttsv12d4pi68j5frcce717nvn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
