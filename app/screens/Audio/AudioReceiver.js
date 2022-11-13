@@ -1,20 +1,11 @@
-import {
-  View,
-  Text,
-  Vibration,
-  ToastAndroid,
-  Alert,
-  StyleSheet,
-} from 'react-native';
+import {View, Text, Vibration, ToastAndroid, StyleSheet} from 'react-native';
 import React, {useEffect, useReducer} from 'react';
-import createAgoraRtcEngine from 'react-native-agora';
-import engine, {
-  agoraInitialization,
-  engineLeave,
-} from '../../utils/AgoraInstance';
+import {ClientRoleType} from 'react-native-agora';
 import agoraConfig from '../../../agora.config';
 import {IconButton} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
+import engine, {agoraInitialization} from '../../utils/AgoraInstance';
+import AnimatedText from '../component/AnimatedText';
 
 const reducer = (state, action) => ({...state, ...action});
 const initialState = {
@@ -22,69 +13,63 @@ const initialState = {
   remoteUser: [],
   enableSpeakerphone: false,
   openMicrophone: true,
-  onSwitchCamera: false,
 };
 
 export default function AudioCallReceiver(props) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const {userName, userPhone} = props;
-  const {inCall, openMicrophone, enableSpeakerphone, onSwitchCamera} = state;
+  const {openMicrophone, enableSpeakerphone, inCall} = state;
 
   const navigation = useNavigation();
-
-  const engine = createAgoraRtcEngine.instance();
 
   useEffect(() => {
     (async () => {
       await init();
     })();
     return () => {
-      engine.removeListener('JoinChannelSuccess');
-      engine.removeListener('UserJoined');
-      engine.removeListener('LeaveChannel');
-      engine.removeListener('UserOffline');
-      engine.destroy();
+      engine.removeListener('JoinChannelSuccess', onJoinChannelSuccess);
+      engine.removeListener('onLeaveChannel', onLeaveChannel);
+      engine.removeListener('onUserOffline', onUserOffline);
+      engine.release();
     };
   }, []);
 
   // Pass in your App ID through this.state, create and initialize an RtcEngine object.
   const init = async () => {
-    // await agoraInitialization();
-    // engine = createAgoraRtcEngine.instance();
-    engine.joinChannel(agoraConfig.token, agoraConfig.channelName, null, 0);
-    engine.addListener('JoinChannelSuccess', ({localUid, channelId}) => {
-      // Alert.alert('onJoinChannelSuccess');
-      ToastAndroid.show(`${localUid} Joined ${channelId}`, ToastAndroid.LONG);
-      dispatch({
-        inCall: true,
-      });
+    await agoraInitialization();
+    engine.registerEventHandler();
+    engine.joinChannel(agoraConfig.token, agoraConfig.channelName, 0, {
+      clientRoleType: ClientRoleType.ClientRoleBroadcaster,
     });
-    // Occurs when a remote user (COMMUNICATION)/ host (LIVE_BROADCASTING) joins the channel.
-    engine.addListener('UserJoined', ({localUid, channelId}) => {
-      ToastAndroid.show(
-        `${localUid} Remote User Joined ${channelId}`,
-        ToastAndroid.LONG,
-      );
-      dispatch({remoteUser: localUid});
-    });
-    engine.addListener('LeaveChannel', ({localUid}) => {
-      Vibration.vibrate([0, 100]);
-      dispatch({
-        inCall: false,
-        remoteUser: null,
-      });
+    engine.enableAudio();
+    engine.addListener('onJoinChannelSuccess', onJoinChannelSuccess);
+    engine.addListener('onLeaveChannel', onLeaveChannel);
+    engine.addListener('onUserOffline', onUserOffline);
+  };
 
-      ToastAndroid.showWithGravity(
-        `${localUid} Call Ended`,
-        ToastAndroid.SHORT,
-        ToastAndroid.BOTTOM,
-      );
-      // engine.destroy();
-      navigation.goBack();
+  const onJoinChannelSuccess = () => {
+    ToastAndroid.show(`Channel Joined`, ToastAndroid.LONG);
+    dispatch({
+      inCall: true,
     });
-    engine.addListener('UserOffline', ({}) => {
-      endCall();
+  };
+  const onLeaveChannel = () => {
+    Vibration.vibrate([0, 100]);
+    dispatch({
+      inCall: false,
     });
+
+    ToastAndroid.showWithGravity(
+      `Call Ended`,
+      ToastAndroid.SHORT,
+      ToastAndroid.BOTTOM,
+    );
+    engine.release();
+    navigation.goBack();
+  };
+
+  const onUserOffline = () => {
+    endCall();
   };
 
   const switchMicrophone = async () => {
@@ -113,14 +98,6 @@ export default function AudioCallReceiver(props) {
       engine.leaveChannel();
     } catch (error) {
       console.log(error + ' EndCall');
-    }
-  };
-  const onToggleCamera = () => {
-    try {
-      engine.switchCamera();
-      dispatch({onSwitchCamera: !onSwitchCamera});
-    } catch (err) {
-      console.warn('setEnableToggleCamera', err);
     }
   };
 
@@ -158,53 +135,48 @@ export default function AudioCallReceiver(props) {
           onPress={switchSpeakerphone}
           color={enableSpeakerphone ? 'black' : 'gray'}
         />
-        <IconButton
-          icon={{
-            uri: 'https://cdn-icons-png.flaticon.com/128/711/711245.png',
-          }}
-          onPress={onToggleCamera}
-          color={onSwitchCamera ? 'black' : 'gray'}
-        />
       </View>
     );
   }
 
   return (
     <View style={{flex: 1, backgroundColor: 'white'}}>
-      <View>
-        <IconButton
-          icon={{
-            uri: 'https://cdn-icons-png.flaticon.com/512/3033/3033143.png',
-          }}
-          size={100}
-          animated
-          style={{
-            alignSelf: 'center',
-            justifyContent: 'center',
-          }}
-        />
-        <Text
-          style={{
-            color: 'black',
-            fontWeight: 'bold',
-            fontSize: 22,
-            alignSelf: 'center',
-          }}>
-          {userName}
-        </Text>
-        <Text
-          style={{
-            color: 'black',
-            fontWeight: '500',
-            fontSize: 15,
-            alignSelf: 'center',
-          }}>
-          {userPhone}
-        </Text>
-      </View>
+      {inCall ? (
+        <View style={{flex: 1}}>
+          <IconButton
+            icon={{
+              uri: 'https://cdn-icons-png.flaticon.com/512/3033/3033143.png',
+            }}
+            size={100}
+            animated
+            style={styles.userImg}
+          />
+          <Text style={styles.userName}>{userName}</Text>
+          <Text style={styles.userPhone}>{userPhone}</Text>
+        </View>
+      ) : (
+        <AnimatedText textValue={'Connecting'} />
+      )}
       <CallingActionBtn />
     </View>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  userName: {
+    color: 'black',
+    fontWeight: 'bold',
+    fontSize: 22,
+    alignSelf: 'center',
+  },
+  userPhone: {
+    color: 'black',
+    fontWeight: '500',
+    fontSize: 15,
+    alignSelf: 'center',
+  },
+  userImg: {
+    alignSelf: 'center',
+    justifyContent: 'center',
+  },
+});

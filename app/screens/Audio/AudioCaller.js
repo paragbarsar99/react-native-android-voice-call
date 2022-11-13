@@ -5,20 +5,15 @@ import {
   ToastAndroid,
   Vibration,
   Text,
-  Animated,
 } from 'react-native';
 import React, {useCallback, useReducer} from 'react';
 import {IconButton} from 'react-native-paper';
-import createAgoraRtcEngine from 'react-native-agora';
-import engine, {
-  agoraInitialization,
-  engineLeave,
-} from '../../utils/AgoraInstance';
 import {SendFcm} from '../../services/Fcm';
 import agoraConfig from '../../../agora.config';
-import {ClientRole} from 'react-native-agora';
 import {BlurView} from '@react-native-community/blur';
 import AnimatedText from '../component/AnimatedText';
+import engine, {agoraInitialization} from '../../utils/AgoraInstance';
+import {ClientRoleType, IRtcEngineEventHandler} from 'react-native-agora';
 
 const reducer = (state, action) => ({...state, ...action});
 const initialState = {
@@ -36,6 +31,7 @@ const initialState = {
   enableSpeakerphone: false,
   openMicrophone: true,
   currentCallId: null,
+  engine: undefined,
 };
 
 function AudioCaller(props) {
@@ -43,10 +39,49 @@ function AudioCaller(props) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const {inCall, openMicrophone, enableSpeakerphone} = state;
 
-  let engine = createAgoraRtcEngine.instance();
+  const makeCall = async () => {
+    try {
+      await agoraInitialization();
+      engine.registerEventHandler();
+      engine.joinChannel(agoraConfig.token, agoraConfig.channelName, 0, {
+        ClientRole: ClientRoleType.ClientRoleBroadcaster,
+      });
+      engine.enableAudio();
+      //occures when a user joins a channel
+      engine.addListener('onJoinChannelSuccess', onJoinChannelSuccess);
+      engine.addListener('onLeaveChannel', onLeaveChannel);
+      engine.addListener('onUserOffline', onUserOffline);
+    } catch (e) {}
+  };
+
+  const onJoinChannelSuccess = () => {
+    ToastAndroid.show(`Channel Joined`, ToastAndroid.SHORT);
+    dispatch({
+      inCall: true,
+    });
+  };
+
+  const onLeaveChannel = () => {
+    Vibration.vibrate([0, 100]);
+    dispatch({
+      inCall: false,
+    });
+    onModalToggle({
+      isVisibleAudio: false,
+    });
+    ToastAndroid.showWithGravity(
+      `Call Ended`,
+      ToastAndroid.SHORT,
+      ToastAndroid.BOTTOM,
+    );
+    engine.release();
+  };
+
+  const onUserOffline = () => {
+    endCall();
+  };
 
   const endCall = useCallback(() => {
-    console.log('channelLeave');
     try {
       engine.leaveChannel();
     } catch (error) {
@@ -54,42 +89,6 @@ function AudioCaller(props) {
     }
   }, []);
 
-  const makeCall = async () => {
-    console.log('Dialing');
-    try {
-      engine.joinChannel(agoraConfig.token, agoraConfig.channelName, null, 0);
-      engine.enableAudio();
-      //occures when a user joins a channel
-      engine.addListener('JoinChannelSuccess', () => {});
-      //Occurs when a remote user (COMMUNICATION)/ host (LIVE_BROADCASTING) joins the channel
-      engine.addListener('UserJoined', ({localUid}) => {
-        dispatch({inCall: true});
-      });
-      //Occurs when a user leaves a channel
-      engine.addListener('LeaveChannel', ({localUid}) => {
-        // SendFcm({fcmToken: receiverFcm}, 'callEndedBYCaller');
-        Vibration.vibrate([0, 100]);
-        dispatch({inCall: false});
-        ToastAndroid.showWithGravity(
-          'Call Ended',
-          ToastAndroid.SHORT,
-          ToastAndroid.BOTTOM,
-        );
-        onModalToggle({
-          isVisibleAudio: false,
-        });
-        // engine.d();
-      });
-      //occurs when remote user leave the channel
-      engine.addListener('UserOffline', ({localUid}) => {
-        endCall(localUid);
-      });
-      engine.addListener('RemoteAudioStateChanged', () => {});
-      // Enable the audio module.
-    } catch (error) {
-      console.error(error);
-    }
-  };
   // Enables or disables the microphone.
   const switchMicrophone = async () => {
     try {
@@ -115,7 +114,33 @@ function AudioCaller(props) {
       console.warn('setEnableSpeakerphone', err);
     }
   };
-
+  function CallingActionBtn() {
+    return (
+      <View style={styles.actionPanel}>
+        <IconButton
+          icon={{
+            uri: 'https://cdn-icons-png.flaticon.com/128/6366/6366556.png',
+          }}
+          onPress={endCall}
+          color={'red'}
+        />
+        <IconButton
+          icon={{
+            uri: 'https://cdn-icons-png.flaticon.com/512/665/665909.png',
+          }}
+          onPress={switchMicrophone}
+          color={openMicrophone ? 'black' : 'gray'}
+        />
+        <IconButton
+          icon={{
+            uri: 'https://cdn-icons-png.flaticon.com/128/59/59284.png',
+          }}
+          onPress={switchSpeakerphone}
+          color={enableSpeakerphone ? 'black' : 'gray'}
+        />
+      </View>
+    );
+  }
   return (
     <Modal
       style={styles.mainContainer}
@@ -156,29 +181,7 @@ function AudioCaller(props) {
           ) : (
             <AnimatedText textValue={'Ringing'} />
           )}
-          <View style={styles.actionPanel}>
-            <IconButton
-              icon={{
-                uri: 'https://cdn-icons-png.flaticon.com/128/6366/6366556.png',
-              }}
-              onPress={endCall}
-              color={'red'}
-            />
-            <IconButton
-              icon={{
-                uri: 'https://cdn-icons-png.flaticon.com/512/665/665909.png',
-              }}
-              onPress={switchMicrophone}
-              color={openMicrophone ? 'black' : 'gray'}
-            />
-            <IconButton
-              icon={{
-                uri: 'https://cdn-icons-png.flaticon.com/128/59/59284.png',
-              }}
-              onPress={switchSpeakerphone}
-              color={enableSpeakerphone ? 'black' : 'gray'}
-            />
-          </View>
+          <CallingActionBtn />
         </View>
       </View>
     </Modal>

@@ -1775,16 +1775,6 @@ acorn@^8.8.0:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.8.1.tgz#0a3f9cbecc4ec3bea6f0a80b66ae8dd2da250b73"
   integrity sha512-7zFpHzhnqYKrkYdUjF1HI1bzd0VygEGX8lFk4k5zVMqHEoES+P+7TKI+EvLO9WVMJ8eekdO0aDEK044xTXwPPA==
 
-agora-react-native-rtm@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/agora-react-native-rtm/-/agora-react-native-rtm-1.5.0.tgz#fe650a9a61db0c94cb804180eb4c1020da092c10"
-  integrity sha512-8LApJVTK21a6/JkOPwzkatrFrcvD/t4WUJNdc55BybBadrlSSE1yzz/1Ts/8tHVdzsX9Pya9pjMZ+UQBGovong==
-
-agora-rn-uikit@^4.0.2:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/agora-rn-uikit/-/agora-rn-uikit-4.0.2.tgz#6959ba9af3b04cefcc8c2d9974fe196e861c45d8"
-  integrity sha512-4a1nWrAuRq5W1g/KOgtI2Mhubdfv5NDltg8ZNdjoTKNxwhhZk2W9af25LkccMy9UdGUC/LCqIp7CzI9GJsEo2w==
-
 ajv@^6.10.0, ajv@^6.12.4:
   version "6.12.6"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.12.6.tgz#baf5a62e802b07d977034586f8c3baf5adf26df4"
@@ -2206,6 +2196,14 @@ buffer@^5.5.0:
   dependencies:
     base64-js "^1.3.1"
     ieee754 "^1.1.13"
+
+buffer@^6.0.3:
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/buffer/-/buffer-6.0.3.tgz#2ace578459cc8fbe2a70aaa8f52ee63b6a74c6c6"
+  integrity sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==
+  dependencies:
+    base64-js "^1.3.1"
+    ieee754 "^1.2.1"
 
 builtin-modules@^2.0.0:
   version "2.0.0"
@@ -3608,7 +3606,7 @@ human-signals@^2.1.0:
   resolved "https://registry.yarnpkg.com/human-signals/-/human-signals-2.1.0.tgz#dc91fcba42e4d06e4abaed33b3e7a3c02f514ea0"
   integrity sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==
 
-ieee754@^1.1.13:
+ieee754@^1.1.13, ieee754@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/ieee754/-/ieee754-1.2.1.tgz#8eb7a10a63fff25d15a57b001586d177d1b0d352"
   integrity sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==
@@ -5794,10 +5792,12 @@ react-is@^16.13.0, react-is@^16.13.1, react-is@^16.7.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
-react-native-agora@3.7.1:
-  version "3.7.1"
-  resolved "https://registry.yarnpkg.com/react-native-agora/-/react-native-agora-3.7.1.tgz#04362c3a02186e36d0255f042a0d28a94de6fd64"
-  integrity sha512-meArJ8YQoZZb4UP2qZEAGWtEJYu/LrOcD/d0sH5BIhwKWZzuLYwN6E/hzlYnd4iWDbuPvaW0dgKCN/RgsoAr3A==
+react-native-agora@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-agora/-/react-native-agora-4.0.0.tgz#d2b9c9071416419a2ef177074c27b64d66ca55aa"
+  integrity sha512-v3zraM1BjawgSGy3pae9LUfNcXbFiTFXgpOb1a/tI4KK7zght5KmdurKeM1eoYcJdIC/Q6G4atFdy3dxdYNQqQ==
+  dependencies:
+    buffer "^6.0.3"
 
 react-native-codegen@*:
   version "0.70.6"

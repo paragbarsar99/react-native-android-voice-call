@@ -29,5 +29,5 @@ export default {
   appId: '29efc6e0e643485a882a321ac80e2248',
   channelName: 'Testing_1',
   token:
-    '007eJxTYPjVsXiN55U56uzeV1P+X7/Je2Lp7yuTTrhanpqQu53NUS5AgcHIMjUt2SzVINXMxNjEwjTRwsIo0djIMDHZwiDVyMjE4jFDbnJDICPDn7CJrIwMEAjiczKEpBaXZOalxxsyMAAAjDYinA==',
+    '007eJxTYOjRSnAvC3/nwFbcxuPcnf7rh9Uqti2qO6+2dy4vfOi35J0Cg5FlalqyWapBqpmJsYmFaaKFhVGisZFhYrKFQaqREVBkd0FyQyAjA0e7ESMjAwSC+JwMIanFJZl56fGGDAwAuEAgCw==',
 };

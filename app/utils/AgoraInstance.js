@@ -1,18 +1,20 @@
-import createAgoraRtcEngine, {ChannelProfileType} from 'react-native-agora';
+import {ToastAndroid} from 'react-native';
+import createAgoraRtcEngine, {
+  ChannelProfileType,
+  ClientRoleType,
+} from 'react-native-agora';
 import agoraConfig from '../../agora.config';
 
-export default engine = null;
+export default engine = createAgoraRtcEngine();
 
 export const agoraInitialization = async () => {
   try {
-    await createAgoraRtcEngine.create(agoraConfig.appId);
-    return true;
+    const isSuccess = await engine.initialize({
+      appId: agoraConfig.appId,
+      channelProfile: ChannelProfileType.ChannelProfileCommunication,
+    });
+    console.log(isSuccess);
   } catch (error) {
     console.log(`Error inside AgoraInitialization ${error}`);
   }
-  //   return Promise.resolve();
-};
-
-export const engineLeave = async () => {
-  await engine.leaveChannel();
 };

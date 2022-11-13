@@ -127,7 +127,7 @@ export default function Home({route, navigation}) {
       } else if (remoteMessage.data.title === 'remoteCallEnded') {
         console.log('remoteCallEnded on Forground');
         //making AgoraEngine Leave Channel
-        engineLeave();
+        // engineLeave();
         dispatch({
           isVisible: false,
         });

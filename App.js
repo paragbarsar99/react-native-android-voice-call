@@ -43,12 +43,6 @@ export default function App() {
     config,
   };
 
-  useEffect(() => {
-    (async () => {
-      await createAgoraRtcEngine.create(agoraConfig.appId);
-    })();
-  });
-
   return (
     <NavigationContainer linking={linking} theme={DefaultTheme}>
       <UserProvider>
