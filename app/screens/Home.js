@@ -346,13 +346,13 @@ export default function Home({route, navigation}) {
         isVisible={localState.isVisibleAudio}
         onModalToggle={dispatch}
       />
-      {/* <VideoCaller
+      <VideoCaller
         receiverFcm={localState.receiverFcm}
         userName={localState.userName}
         userPhone={localState.userPhone}
         isVisible={localState.isVisibleVideo}
         onModalToggle={dispatch}
-      /> */}
+      />
     </View>
   );
 }

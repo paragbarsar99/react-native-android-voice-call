@@ -1,24 +1,38 @@
 import {View, Text, Vibration, ToastAndroid, StyleSheet} from 'react-native';
-import React, {useEffect, useReducer} from 'react';
-import {ClientRoleType} from 'react-native-agora';
+import React, {useContext, useEffect, useReducer} from 'react';
+import {
+  ChannelProfileType,
+  ClientRoleType,
+  RtcSurfaceView,
+  VideoViewSetupMode,
+} from 'react-native-agora';
 import agoraConfig from '../../../agora.config';
 import {IconButton} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
 import engine, {agoraInitialization} from '../../utils/AgoraInstance';
 import AnimatedText from '../component/AnimatedText';
+import {Context as UserContext} from '../../store/Context/UserContext/ContextIndex';
 
 const reducer = (state, action) => ({...state, ...action});
 const initialState = {
   inCall: false,
-  remoteUser: [],
   enableSpeakerphone: false,
   openMicrophone: true,
+  localUser: null,
+  remoteUser: null,
 };
 
 export default function AudioCallReceiver(props) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const {userName, userPhone} = props;
-  const {openMicrophone, enableSpeakerphone, inCall} = state;
+  const {
+    state: {
+      userDetails: {data},
+    },
+  } = useContext(UserContext);
+
+  const {inCall, openMicrophone, enableSpeakerphone, localUser, remoteUser} =
+    state;
 
   const navigation = useNavigation();
 
@@ -27,36 +41,53 @@ export default function AudioCallReceiver(props) {
       await init();
     })();
     return () => {
-      engine.removeListener('JoinChannelSuccess', onJoinChannelSuccess);
-      engine.removeListener('onLeaveChannel', onLeaveChannel);
-      engine.removeListener('onUserOffline', onUserOffline);
+      engine.unregisterEventHandler({
+        onJoinChannelSuccess: onJoinChannelSuccess,
+        onLeaveChannel: onLeaveChannel,
+        onUserOffline: onUserOffline,
+        onUserJoined: onUserJoined,
+      });
       engine.release();
     };
   }, []);
 
   // Pass in your App ID through this.state, create and initialize an RtcEngine object.
   const init = async () => {
-    await agoraInitialization();
-    engine.registerEventHandler();
+    agoraInitialization();
+    engine.registerEventHandler({
+      onJoinChannelSuccess: onJoinChannelSuccess,
+      onLeaveChannel: onLeaveChannel,
+      onUserOffline: onUserOffline,
+      onUserJoined: onUserJoined,
+    });
+    engine.enableAudio();
+    engine.setChannelProfile(ChannelProfileType.ChannelProfileCommunication);
     engine.joinChannel(agoraConfig.token, agoraConfig.channelName, 0, {
       clientRoleType: ClientRoleType.ClientRoleBroadcaster,
     });
-    engine.enableAudio();
-    engine.addListener('onJoinChannelSuccess', onJoinChannelSuccess);
-    engine.addListener('onLeaveChannel', onLeaveChannel);
-    engine.addListener('onUserOffline', onUserOffline);
   };
 
-  const onJoinChannelSuccess = () => {
+  const onUserJoined = (connection, Uid) => {
+    try {
+      dispatch({
+        remoteUser: Uid,
+      });
+    } catch (error) {}
+  };
+
+  const onJoinChannelSuccess = (connection, Uid) => {
     ToastAndroid.show(`Channel Joined`, ToastAndroid.LONG);
     dispatch({
       inCall: true,
+      localUser: Uid,
     });
   };
   const onLeaveChannel = () => {
     Vibration.vibrate([0, 100]);
     dispatch({
       inCall: false,
+      localUser: null,
+      remoteUser: null,
     });
 
     ToastAndroid.showWithGravity(
@@ -64,7 +95,6 @@ export default function AudioCallReceiver(props) {
       ToastAndroid.SHORT,
       ToastAndroid.BOTTOM,
     );
-    engine.release();
     navigation.goBack();
   };
 
@@ -93,7 +123,7 @@ export default function AudioCallReceiver(props) {
   };
 
   const endCall = connection => {
-    console.log('channelLeave');
+    console.log('channelLeave ', connection);
     try {
       engine.leaveChannel();
     } catch (error) {
@@ -103,17 +133,7 @@ export default function AudioCallReceiver(props) {
 
   function CallingActionBtn() {
     return (
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          backgroundColor: 'white',
-          borderRadius: 10,
-          bottom: 40,
-          marginHorizontal: '20%',
-          padding: 10,
-          position: 'absolute',
-        }}>
+      <View style={styles.actionPanel}>
         <IconButton
           icon={{
             uri: 'https://cdn-icons-png.flaticon.com/128/6366/6366556.png',
@@ -139,21 +159,33 @@ export default function AudioCallReceiver(props) {
     );
   }
 
+  const CallingContainer = props => {
+    return (
+      <View style={styles.callingContainer}>
+        <View
+          style={{
+            width: 150,
+            height: 150,
+            borderRadius: 75,
+            borderColor: 'blue',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Text style={{color: 'black', fontWeight: '500', fontSize: 18}}>
+            {props.userName}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={{flex: 1, backgroundColor: 'white'}}>
       {inCall ? (
-        <View style={{flex: 1}}>
-          <IconButton
-            icon={{
-              uri: 'https://cdn-icons-png.flaticon.com/512/3033/3033143.png',
-            }}
-            size={100}
-            animated
-            style={styles.userImg}
-          />
-          <Text style={styles.userName}>{userName}</Text>
-          <Text style={styles.userPhone}>{userPhone}</Text>
-        </View>
+        <>
+          <CallingContainer userName={userName} />
+          {remoteUser && <CallingContainer userName={data.userName} />}
+        </>
       ) : (
         <AnimatedText textValue={'Connecting'} />
       )}
@@ -168,6 +200,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 22,
     alignSelf: 'center',
+  },
+  actionPanel: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    bottom: 40,
+    marginHorizontal: '20%',
+    padding: 10,
+    position: 'absolute',
+  },
+  callingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   userPhone: {
     color: 'black',

@@ -6,58 +6,74 @@ import {
   Vibration,
   Text,
 } from 'react-native';
-import React, {useCallback, useReducer} from 'react';
+import React, {useContext, useReducer} from 'react';
 import {IconButton} from 'react-native-paper';
 import {SendFcm} from '../../services/Fcm';
 import agoraConfig from '../../../agora.config';
 import {BlurView} from '@react-native-community/blur';
 import AnimatedText from '../component/AnimatedText';
 import engine, {agoraInitialization} from '../../utils/AgoraInstance';
-import {ClientRoleType, IRtcEngineEventHandler} from 'react-native-agora';
-
+import {ClientRoleType, ChannelProfileType} from 'react-native-agora';
+import {Context as UserContext} from '../../store/Context/UserContext/ContextIndex';
 const reducer = (state, action) => ({...state, ...action});
 const initialState = {
-  ready: false,
-  number: '',
-  ringing: false,
   inCall: false,
-  held: false,
-  videoHeld: false,
-  error: null,
-  localStreamURL: null,
-  remoteStreamURL: null,
-  joinSucceed: false,
-  peerIds: [],
   enableSpeakerphone: false,
   openMicrophone: true,
-  currentCallId: null,
-  engine: undefined,
+  localUser: null,
+  remoteUser: null,
 };
 
 function AudioCaller(props) {
   const {userName, userPhone, isVisible, onModalToggle, receiverFcm} = props;
   const [state, dispatch] = useReducer(reducer, initialState);
-  const {inCall, openMicrophone, enableSpeakerphone} = state;
+  const {inCall, openMicrophone, enableSpeakerphone, localUser, remoteUser} =
+    state;
+
+  const {
+    state: {
+      userDetails: {data},
+    },
+  } = useContext(UserContext);
 
   const makeCall = async () => {
     try {
-      await agoraInitialization();
-      engine.registerEventHandler();
+      agoraInitialization();
+      engine.registerEventHandler({
+        onJoinChannelSuccess: onJoinChannelSuccess,
+        onLeaveChannel: onLeaveChannel,
+        onUserOffline: onUserOffline,
+        onUserJoined: onUserJoined,
+      });
+      engine.enableAudio();
+      engine.setChannelProfile(ChannelProfileType.ChannelProfileCommunication);
       engine.joinChannel(agoraConfig.token, agoraConfig.channelName, 0, {
         ClientRole: ClientRoleType.ClientRoleBroadcaster,
       });
-      engine.enableAudio();
-      //occures when a user joins a channel
-      engine.addListener('onJoinChannelSuccess', onJoinChannelSuccess);
-      engine.addListener('onLeaveChannel', onLeaveChannel);
-      engine.addListener('onUserOffline', onUserOffline);
+      return () => {
+        engine.unregisterEventHandler({
+          onJoinChannelSuccess: onJoinChannelSuccess,
+          onLeaveChannel: onLeaveChannel,
+          onUserOffline: onUserOffline,
+          onUserJoined: onUserJoined,
+        });
+      };
     } catch (e) {}
   };
 
-  const onJoinChannelSuccess = () => {
-    ToastAndroid.show(`Channel Joined`, ToastAndroid.SHORT);
+  const onUserJoined = (connection, Uid) => {
+    try {
+      dispatch({
+        remoteUser: Uid,
+      });
+    } catch (error) {}
+  };
+
+  const onJoinChannelSuccess = (connection, Uid) => {
+    ToastAndroid.show(`Channel Joined `, ToastAndroid.SHORT);
     dispatch({
       inCall: true,
+      localUser: 0,
     });
   };
 
@@ -65,6 +81,8 @@ function AudioCaller(props) {
     Vibration.vibrate([0, 100]);
     dispatch({
       inCall: false,
+      localUid: null,
+      remoteUser: null,
     });
     onModalToggle({
       isVisibleAudio: false,
@@ -81,20 +99,17 @@ function AudioCaller(props) {
     endCall();
   };
 
-  const endCall = useCallback(() => {
+  const endCall = () => {
     try {
       engine.leaveChannel();
     } catch (error) {
       console.log(error + ' EndCall');
     }
-  }, []);
+  };
 
-  // Enables or disables the microphone.
   const switchMicrophone = async () => {
     try {
-      // console.log(openMicrophone, ' openMicrophone');
-      const isLocal = engine.enableLocalAudio(openMicrophone ? false : true);
-      console.log(`isLocalAudioEnabled: ${isLocal} `);
+      engine.enableLocalAudio(openMicrophone ? false : true);
       dispatch({
         openMicrophone: !openMicrophone,
       });
@@ -106,14 +121,13 @@ function AudioCaller(props) {
   // Switch the audio playback device.
   const switchSpeakerphone = () => {
     try {
-      const isSpeaker = engine.setEnableSpeakerphone(!enableSpeakerphone);
-      console.log(`setEnableSpeakerphone: ${isSpeaker} `);
-
+      engine.setEnableSpeakerphone(!enableSpeakerphone);
       dispatch({enableSpeakerphone: !enableSpeakerphone});
     } catch (err) {
       console.warn('setEnableSpeakerphone', err);
     }
   };
+
   function CallingActionBtn() {
     return (
       <View style={styles.actionPanel}>
@@ -141,6 +155,27 @@ function AudioCaller(props) {
       </View>
     );
   }
+
+  const CallingContainer = props => {
+    return (
+      <View style={styles.callingContainer}>
+        <View
+          style={{
+            width: 150,
+            height: 150,
+            borderRadius: 75,
+            borderColor: 'blue',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Text style={{color: 'black', fontWeight: '500', fontSize: 18}}>
+            {props.userName}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <Modal
       style={styles.mainContainer}
@@ -163,21 +198,10 @@ function AudioCaller(props) {
         />
         <View style={styles.container}>
           {inCall ? (
-            <View
-              style={{
-                marginTop: '30%',
-              }}>
-              <IconButton
-                icon={{
-                  uri: 'https://cdn-icons-png.flaticon.com/512/3033/3033143.png',
-                }}
-                size={100}
-                animated
-                style={styles.userImg}
-              />
-              <Text style={styles.userName}>{userName}</Text>
-              <Text style={styles.userPhone}>{userPhone}</Text>
-            </View>
+            <>
+              <CallingContainer userName={userName} />
+              {remoteUser && <CallingContainer userName={data.userName} />}
+            </>
           ) : (
             <AnimatedText textValue={'Ringing'} />
           )}
@@ -195,6 +219,13 @@ const styles = StyleSheet.create({
   },
   absolute: {
     ...StyleSheet.absoluteFillObject,
+  },
+  callingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'black',
   },
   container: {flex: 1, justifyContent: 'space-between'},
   userImg: {
@@ -218,9 +249,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: 'white',
     borderRadius: 10,
-    marginBottom: 40,
+    bottom: 40,
     marginHorizontal: '20%',
     padding: 10,
+    position: 'absolute',
   },
 });
 

@@ -7,13 +7,12 @@ import agoraConfig from '../../agora.config';
 
 export default engine = createAgoraRtcEngine();
 
-export const agoraInitialization = async () => {
+export const agoraInitialization = () => {
   try {
-    const isSuccess = await engine.initialize({
+    const isSuccess = engine.initialize({
       appId: agoraConfig.appId,
-      channelProfile: ChannelProfileType.ChannelProfileCommunication,
     });
-    console.log(isSuccess);
+    console.log(isSuccess + ' isAgoraInitilize');
   } catch (error) {
     console.log(`Error inside AgoraInitialization ${error}`);
   }
